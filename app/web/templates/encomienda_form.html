@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Registrar recepción de encomienda</h1>
+<p>Recepcionista: <strong>{{ empleado.nombre_completo if empleado else '¿?' }}</strong> ·
+   Sucursal de origen: <strong>{{ empleado.sucursal if empleado else '¿?' }}</strong></p>
+<form method="post" class="caja">
+  <div class="fila">
+    <div>
+      <label>CI del remitente</label><input name="ci_remitente" value="{{ form.get('ci_remitente', '') }}" required>
+      <label>CI del destinatario</label><input name="ci_destinatario" value="{{ form.get('ci_destinatario', '') }}" required>
+      <label>Sucursal de destino</label>
+      <select name="destino">{% for s in sucursales %}<option value="{{ s.id_sucursal }}" {{ 'selected' if form.get('destino') == s.id_sucursal|string }}>{{ s.nombre }} ({{ s.ciudad }})</option>{% endfor %}</select>
+      <label>Tipo de encomienda</label>
+      <select name="tipo">{% for t in tipos %}<option value="{{ t.id_tipo }}" {{ 'selected' if form.get('tipo') == t.id_tipo|string }}>{{ t.nombre }}</option>{% endfor %}</select>
+      <label>Forma de envío</label>
+      <select name="forma">
+        <option value="TERRESTRE" {{ 'selected' if form.get('forma') == 'TERRESTRE' }}>Terrestre</option>
+        <option value="AEREO" {{ 'selected' if form.get('forma') == 'AEREO' }}>Aéreo</option>
+      </select>
+    </div>
+    <div>
+      <label>Peso (kg)</label><input name="peso" value="{{ form.get('peso', '') }}" required>
+      <label>Volumen (m³)</label><input name="volumen" value="{{ form.get('volumen', '0') }}">
+      <label>Recargo por volumen (solo aéreo, Bs)</label><input name="recargo" value="{{ form.get('recargo', '0') }}">
+      <label>Descripción del contenido</label><input name="contenido" value="{{ form.get('contenido', '') }}" required>
+    </div>
+  </div>
+  <button type="submit" name="accion" value="calcular">Calcular costo</button>
+
+  {% if resumen %}
+  <div class="caja ok" style="margin-top:16px">
+    <strong>Remitente:</strong> {{ resumen.remitente.nombres }} {{ resumen.remitente.apellidos }} ·
+    <strong>Destinatario:</strong> {{ resumen.destinatario.nombres }} {{ resumen.destinatario.apellidos }}<br>
+    {{ resumen.costo.kilos_cobrados }} kg × {{ resumen.costo.precio_por_kilo }} Bs = {{ resumen.costo.subtotal }} Bs ·
+    Recargo: {{ resumen.costo.recargo }} Bs · <strong>Total: {{ resumen.costo.total }} Bs</strong>
+    <label><input type="checkbox" name="declara" value="si" style="width:auto">
+      El remitente declara que el contenido no es un producto prohibido.</label>
+    <button type="submit" name="accion" value="confirmar">Confirmar registro</button>
+    <button type="submit" name="accion" value="cancelar" class="secundario" formnovalidate>Cancelar</button>
+  </div>
+  {% endif %}
+</form>
+{% if error %}<div class="caja error">{{ error }}
+  {% if 'no está registrado' in error %} <a href="{{ url_for('web.cliente_nuevo', volver=url_for('web.encomienda_nueva')) }}">Registrar cliente</a>{% endif %}
+</div>{% endif %}
+{% endblock %}

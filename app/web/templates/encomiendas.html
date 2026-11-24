@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Encomiendas recientes</h1>
+<p><a href="{{ url_for('web.encomienda_nueva') }}">+ Nueva encomienda</a></p>
+<table>
+  <tr><th>Código de guía</th><th>Recepción</th><th>Remitente</th><th>Destinatario</th><th>Destino</th><th>Total Bs</th><th>Estado</th><th>Recepcionista</th></tr>
+  {% for e in encomiendas %}
+  <tr><td><a href="{{ url_for('web.encomienda_detalle', codigo=e.codigo_guia) }}">{{ e.codigo_guia }}</a></td>
+      <td>{{ e.fecha_hora_recepcion.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ e.remitente }}</td><td>{{ e.destinatario }}</td>
+      <td>{{ e.destino }}</td><td>{{ e.monto_total }}</td><td>{{ e.estado }}</td><td>{{ e.recepcionista }}</td></tr>
+  {% else %}
+  <tr><td colspan="8">Todavía no hay encomiendas.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
