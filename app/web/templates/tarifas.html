@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Tarifas vigentes</h1>
+<table>
+  <tr><th>Origen</th><th>Destino</th><th>Tipo</th><th>Forma</th><th>Bs por kilo</th><th>Umbral m³</th><th>Recargo Bs</th></tr>
+  {% for t in tarifas %}
+  <tr><td>{{ t.origen }}</td><td>{{ t.destino }}</td><td>{{ t.tipo }}</td><td>{{ t.forma_envio }}</td>
+      <td>{{ t.precio_por_kilo }}</td><td>{{ t.umbral_volumen_m3 }}</td><td>{{ t.recargo_volumen }}</td></tr>
+  {% else %}
+  <tr><td colspan="7">No hay tarifas cargadas.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

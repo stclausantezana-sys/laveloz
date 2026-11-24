@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Sistema de encomiendas – Currier La Veloz</h1>
+{% if error %}
+  <div class="caja error"><strong>No se pudo conectar a la base de datos.</strong><br>{{ error }}
+  <p>Revise DB_CONN en el archivo .env y que el script db/LaVeloz_crear_bd.sql se haya ejecutado.</p></div>
+{% else %}
+  <div class="caja ok"><strong>Conexión a SQL Server correcta.</strong></div>
+  <table>
+    <tr><th>Ciudades</th><th>Sucursales</th><th>Tarifas vigentes</th><th>Clientes</th><th>Encomiendas</th></tr>
+    <tr><td>{{ estado.ciudades }}</td><td>{{ estado.sucursales }}</td><td>{{ estado.tarifas }}</td>
+        <td>{{ estado.clientes }}</td><td>{{ estado.encomiendas }}</td></tr>
+  </table>
+{% endif %}
+{% endblock %}

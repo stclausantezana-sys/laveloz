@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Currier La Veloz{% endblock %}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6fa; color: #1d2433; }
+    header { background: #1F3864; color: #fff; padding: 12px 20px; }
+    header a { color: #fff; margin-right: 18px; text-decoration: none; font-weight: bold; }
+    main { max-width: 900px; margin: 20px auto; padding: 0 16px; }
+    .caja { background: #fff; border: 1px solid #d5dbe5; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #d5dbe5; padding: 6px 8px; text-align: left; }
+    th { background: #D9E2F3; }
+    label { display: block; margin-top: 8px; font-weight: bold; }
+    input, select { padding: 6px; width: 100%; max-width: 320px; box-sizing: border-box; }
+    button { margin-top: 12px; padding: 8px 16px; background: #1F3864; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
+    .error { background: #fde2e1; border-color: #b42318; color: #7a1a12; }
+    .ok { background: #e3f1e3; border-color: #2e6b2e; }
+    .campo-error { color: #b42318; font-size: 0.9em; }
+    .fila { display: flex; gap: 24px; flex-wrap: wrap; }
+    .fila > div { flex: 1; min-width: 240px; }
+    button.secundario { background: #6b7280; }
+    form.inline { display: inline; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">Inicio</a><a href="/clientes">Clientes</a><a href="/encomiendas/nueva">Nueva encomienda</a><a href="/encomiendas">Encomiendas</a><a href="/tarifas">Tarifas</a><a href="/cotizar">Cotizar</a>
+  </header>
+  <main>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in mensajes %}<div class="caja {{ cat }}">{{ m }}</div>{% endfor %}
+    {% endwith %}
+    {% block contenido %}{% endblock %}
+  </main>
+</body>
+</html>
