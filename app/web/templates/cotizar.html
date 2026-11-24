@@ -21,7 +21,7 @@
 {% if error %}<div class="caja error">{{ error }}</div>{% endif %}
 {% if costo %}
 <div class="caja ok">
-  <strong>Kilos cobrables:</strong> {{ costo.kilos_cobrados }} kg × {{ costo.precio_por_kilo }} Bs = {{ costo.subtotal }} Bs<br>
+  <strong>Kilos cobrables:</strong> {{ costo.kilosCobrados }} kg × {{ costo.precioPorKilo }} Bs = {{ costo.subtotal }} Bs<br>
   <strong>Recargo por volumen:</strong> {{ costo.recargo }} Bs<br>
   <strong>Total: {{ costo.total }} Bs</strong>
 </div>

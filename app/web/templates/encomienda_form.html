@@ -31,7 +31,7 @@
   <div class="caja ok" style="margin-top:16px">
     <strong>Remitente:</strong> {{ resumen.remitente.nombres }} {{ resumen.remitente.apellidos }} ·
     <strong>Destinatario:</strong> {{ resumen.destinatario.nombres }} {{ resumen.destinatario.apellidos }}<br>
-    {{ resumen.costo.kilos_cobrados }} kg × {{ resumen.costo.precio_por_kilo }} Bs = {{ resumen.costo.subtotal }} Bs ·
+    {{ resumen.costo.kilosCobrados }} kg × {{ resumen.costo.precioPorKilo }} Bs = {{ resumen.costo.subtotal }} Bs ·
     Recargo: {{ resumen.costo.recargo }} Bs · <strong>Total: {{ resumen.costo.total }} Bs</strong>
     <label><input type="checkbox" name="declara" value="si" style="width:auto">
       El remitente declara que el contenido no es un producto prohibido.</label>

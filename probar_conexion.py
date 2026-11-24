@@ -6,11 +6,11 @@ import sys
 
 import pyodbc
 
-from app.datos.conexion import cadena_conexion, consultar
+from app.datos.conexion import cadenaConexion, consultar
 
 print("Controladores ODBC de SQL Server instalados:", [d for d in pyodbc.drivers() if "SQL Server" in d])
 try:
-    print("Conectando con:", cadena_conexion())
+    print("Conectando con:", cadenaConexion())
     filas = consultar("""
         SELECT t.name AS tabla, SUM(p.rows) AS filas
         FROM sys.tables t JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)

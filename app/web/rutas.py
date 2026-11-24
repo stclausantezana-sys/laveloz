@@ -1,14 +1,21 @@
-"""Pantallas web (capa de presentación). Solo leen el formulario, llaman a los
-servicios y muestran el resultado: no tienen reglas de negocio ni SQL."""
+"""Pantallas web (capa de presentación = fronteras del diseño).
+
+  FrmCliente               -> clientes.html y cliente_form.html (rutas /clientes...)
+  FrmRecepcionEncomienda   -> encomienda_form.html (ruta /encomiendas/nueva)
+
+Solo leen el formulario, arman el DTO, llaman a los controladores y muestran el
+resultado: no tienen reglas de negocio ni SQL.
+"""
 import os
 from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from app.datos import catalogo_repo, cliente_repo, encomienda_repo
+from app.datos.catalogo_repo import CatalogoRepositorio, TarifaRepositorio
 from app.datos.conexion import consultar
-from app.servicios.clientes import ErrorDeValidacion, eliminar_cliente, registrar_cliente
-from app.servicios.recepcion import ErrorDeNegocio, cotizar, preparar_encomienda, registrar_encomienda
+from app.datos.encomienda_repo import EncomiendaRepositorio, SeguimientoRepositorio
+from app.servicios.clientes import CtrlCliente, ErrorDeValidacion
+from app.servicios.recepcion import CtrlRecepcion, CtrlTarifa, EncomiendaDTO, ErrorDeNegocio
 
 bp = Blueprint("web", __name__)
 
@@ -18,7 +25,7 @@ def numero(texto, defecto="0"):
     return Decimal((texto or defecto).strip().replace(",", "."))
 
 
-def recepcionista_actual():
+def recepcionistaActual():
     # Release 1: no hay inicio de sesión (HU-01 está en el Sprint 4).
     # Se usa el recepcionista de prueba configurado en .env.
     return int(os.getenv("RECEPCIONISTA_ID", "1"))
@@ -44,30 +51,37 @@ def inicio():
 
 @bp.route("/tarifas")
 def tarifas():
-    return render_template("tarifas.html", tarifas=catalogo_repo.listar_tarifas_vigentes())
+    return render_template("tarifas.html", tarifas=TarifaRepositorio().listarVigentes())
 
 
 @bp.route("/cotizar", methods=["GET", "POST"])
 def cotizar_envio():
+    """HU-10: calcula el costo entre dos ciudades sin registrar nada."""
     costo, error, form = None, None, request.form
     if request.method == "POST":
         try:
-            _, costo = cotizar(int(form["origen"]), int(form["destino"]), int(form["tipo"]), form["forma"],
-                               numero(form["peso"]), numero(form.get("volumen")), numero(form.get("recargo")))
+            ctrl = CtrlTarifa()
+            dto = EncomiendaDTO(idTipo=int(form["tipo"]), formaEnvio=form["forma"],
+                                pesoKg=numero(form["peso"]), volumenM3=numero(form.get("volumen")),
+                                recargoManual=numero(form.get("recargo")))
+            tarifa = ctrl.obtenerTarifaEntreCiudades(int(form["origen"]), int(form["destino"]),
+                                                     dto.idTipo, dto.formaEnvio)
+            costo = ctrl.calcularCosto(tarifa, dto)
         except InvalidOperation:
             error = "Revise el peso, el volumen y el recargo: deben ser números."
         except ErrorDeNegocio as e:
             error = str(e)
-    return render_template("cotizar.html", ciudades=catalogo_repo.listar_ciudades(),
-                           tipos=catalogo_repo.listar_tipos(), costo=costo, error=error, form=form)
+    catalogo = CatalogoRepositorio()
+    return render_template("cotizar.html", ciudades=catalogo.listarCiudades(),
+                           tipos=catalogo.listarTipos(), costo=costo, error=error, form=form)
 
 
-# ---------------- HU-07 Clientes ----------------
+# ---------------- HU-07 Clientes (FrmCliente) ----------------
 
 @bp.route("/clientes")
 def clientes():
     q = request.args.get("q", "").strip()
-    lista = cliente_repo.buscar(q) if q else cliente_repo.buscar("", limite=20)
+    lista = CtrlCliente().buscarClientes(q, limite=50 if q else 20)
     return render_template("clientes.html", clientes=lista, q=q)
 
 
@@ -77,7 +91,8 @@ def cliente_nuevo():
     errores = {}
     if request.method == "POST":
         try:
-            registrar_cliente(form["ci"], form["nombres"], form["apellidos"], form["telefono"], form.get("email", ""))
+            CtrlCliente().registrarCliente(form["ci"], form["nombres"], form["apellidos"],
+                                           form["telefono"], form.get("email", ""))
             flash(f"Cliente {form['nombres']} {form['apellidos']} registrado.", "ok")
             volver = form.get("volver")
             return redirect(volver if volver and volver.startswith("/") else url_for("web.clientes", q=form["ci"]))
@@ -89,53 +104,53 @@ def cliente_nuevo():
 @bp.route("/clientes/<int:id_cliente>/eliminar", methods=["POST"])
 def cliente_eliminar(id_cliente):
     try:
-        eliminar_cliente(id_cliente)
+        CtrlCliente().eliminarCliente(id_cliente)
         flash("Cliente eliminado.", "ok")
     except ErrorDeValidacion as e:
         flash(str(e), "error")
     return redirect(url_for("web.clientes"))
 
 
-# ---------------- HU-09 Encomiendas ----------------
+# ---------------- HU-09 Encomiendas (FrmRecepcionEncomienda) ----------------
 
 @bp.route("/encomiendas")
 def encomiendas():
-    return render_template("encomiendas.html", encomiendas=encomienda_repo.listar_recientes())
+    return render_template("encomiendas.html", encomiendas=EncomiendaRepositorio().listarRecientes())
 
 
 @bp.route("/encomiendas/nueva", methods=["GET", "POST"])
 def encomienda_nueva():
     form = request.form
     resumen, error = None, None
+    ctrl = CtrlRecepcion()
     if request.method == "POST":
         accion = form.get("accion")
         if accion == "cancelar":                               # HU-09, criterio 4
             flash("Registro cancelado: no se guardó nada.", "ok")
             return redirect(url_for("web.encomienda_nueva"))
         try:
-            datos = {
-                "ci_remitente": form["ci_remitente"], "ci_destinatario": form["ci_destinatario"],
-                "id_sucursal_destino": int(form["destino"]), "id_tipo": int(form["tipo"]),
-                "forma_envio": form["forma"], "peso_kg": numero(form["peso"], ""),
-                "volumen_m3": numero(form.get("volumen")), "recargo_manual": numero(form.get("recargo")),
-                "contenido": form.get("contenido", ""),
-            }
+            dto = EncomiendaDTO(
+                ciRemitente=form["ci_remitente"], ciDestinatario=form["ci_destinatario"],
+                idSucursalDestino=int(form["destino"]), idTipo=int(form["tipo"]),
+                formaEnvio=form["forma"], pesoKg=numero(form["peso"], ""),
+                volumenM3=numero(form.get("volumen")), recargoManual=numero(form.get("recargo")),
+                contenido=form.get("contenido", ""), declaraNoProhibido=form.get("declara") == "si")
             if accion == "confirmar":
-                codigo = registrar_encomienda(datos, recepcionista_actual(), form.get("declara") == "si")
+                codigo = ctrl.registrarEncomienda(dto, recepcionistaActual())
                 flash(f"Encomienda registrada con código de guía {codigo}. El remitente debe pasar a caja.", "ok")
                 return redirect(url_for("web.encomienda_detalle", codigo=codigo))
-            resumen = preparar_encomienda(datos, recepcionista_actual())   # accion == "calcular"
+            resumen = ctrl.prepararEncomienda(dto, recepcionistaActual())   # accion == "calcular"
         except InvalidOperation:
             error = "Revise el peso, el volumen y el recargo: deben ser números."
         except ErrorDeNegocio as e:
             error = str(e)
-    empleado = catalogo_repo.obtener_empleado(recepcionista_actual())
+    catalogo = CatalogoRepositorio()
     return render_template("encomienda_form.html", form=form, resumen=resumen, error=error,
-                           empleado=empleado, sucursales=catalogo_repo.listar_sucursales(),
-                           tipos=catalogo_repo.listar_tipos())
+                           empleado=catalogo.obtenerEmpleado(recepcionistaActual()),
+                           sucursales=catalogo.listarSucursales(), tipos=catalogo.listarTipos())
 
 
 @bp.route("/encomiendas/<codigo>")
 def encomienda_detalle(codigo):
     return render_template("encomienda_detalle.html", codigo=codigo,
-                           seguimiento=encomienda_repo.seguimiento_de(codigo))
+                           seguimiento=SeguimientoRepositorio().listarPorCodigo(codigo))

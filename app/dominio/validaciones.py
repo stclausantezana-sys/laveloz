@@ -10,14 +10,14 @@ TELEFONO_VALIDO = re.compile(r"^\+?\d{7,15}$")
 EMAIL_VALIDO = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
 
 
-def normalizar_ci(ci: str) -> str:
+def normalizarCi(ci: str) -> str:
     return (ci or "").strip().upper().replace(" ", "")
 
 
-def validar_cliente(ci, nombres, apellidos, telefono, email=""):
+def validarCliente(ci, nombres, apellidos, telefono, email=""):
     """HU-07, criterio 3: campos obligatorios y formatos."""
     errores = {}
-    if not CI_VALIDO.match(normalizar_ci(ci)):
+    if not CI_VALIDO.match(normalizarCi(ci)):
         errores["ci"] = "Ingrese un CI válido (solo números, con extensión opcional, p. ej. 1234567-1A)."
     if not (nombres or "").strip():
         errores["nombres"] = "Los nombres son obligatorios."
@@ -30,15 +30,15 @@ def validar_cliente(ci, nombres, apellidos, telefono, email=""):
     return errores
 
 
-def validar_encomienda(peso_kg: Decimal, volumen_m3: Decimal, id_sucursal_origen: int,
-                       id_sucursal_destino: int, contenido: str):
+def validarEncomienda(pesoKg: Decimal, volumenM3: Decimal, idSucursalOrigen: int,
+                      idSucursalDestino: int, contenido: str):
     """HU-09, criterio 2: datos inválidos no se guardan."""
     errores = {}
-    if peso_kg is None or peso_kg <= 0:
+    if pesoKg is None or pesoKg <= 0:
         errores["peso"] = "El peso debe ser mayor a 0."
-    if volumen_m3 is None or volumen_m3 < 0:
+    if volumenM3 is None or volumenM3 < 0:
         errores["volumen"] = "El volumen no puede ser negativo."
-    if id_sucursal_origen == id_sucursal_destino:
+    if idSucursalOrigen == idSucursalDestino:
         errores["destino"] = "La sucursal de destino debe ser distinta de la de origen."
     if not (contenido or "").strip():
         errores["contenido"] = "Describa el contenido de la encomienda."

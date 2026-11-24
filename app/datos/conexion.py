@@ -1,4 +1,4 @@
-"""Conexión a SQL Server con pyodbc.
+"""Conexión a SQL Server con pyodbc: clase ConexionBD del diseño (capa de datos).
 
 Los datos se leen del archivo .env (ver .env.example):
   DB_SERVER=.\\SQLEXPRESS       nombre del servidor que aparece en SSMS
@@ -9,7 +9,6 @@ El controlador ODBC se elige solo: el más nuevo instalado de la lista PREFERIDO
 Nunca se escribe una contraseña en el código.
 """
 import os
-from contextlib import contextmanager
 
 import pyodbc
 from dotenv import load_dotenv
@@ -19,7 +18,7 @@ load_dotenv()
 PREFERIDOS = ["ODBC Driver 18 for SQL Server", "ODBC Driver 17 for SQL Server"]
 
 
-def elegir_controlador():
+def elegirControlador():
     instalados = pyodbc.drivers()
     for d in PREFERIDOS:
         if d in instalados:
@@ -30,43 +29,59 @@ def elegir_controlador():
         + (", ".join(instalados) or "ninguno"))
 
 
-def cadena_conexion():
+def cadenaConexion():
     if os.getenv("DB_CONN"):
         return os.getenv("DB_CONN")
     servidor = os.getenv("DB_SERVER", r".\SQLEXPRESS")
     base = os.getenv("DB_NAME", "LaVelozDB")
-    return (f"DRIVER={{{elegir_controlador()}}};SERVER={servidor};DATABASE={base};"
+    return (f"DRIVER={{{elegirControlador()}}};SERVER={servidor};DATABASE={base};"
             "Trusted_Connection=yes;TrustServerCertificate=yes;")
 
 
-def obtener_conexion():
-    return pyodbc.connect(cadena_conexion())
+class ConexionBD:
+    """Maneja UNA transacción: iniciarTransaccion() -> usar el cursor -> confirmar() o revertir().
 
-
-@contextmanager
-def transaccion():
-    """Abre una conexión, hace commit si todo sale bien y rollback si algo falla.
-
-    Uso (por ejemplo en HU-09, para guardar Encomienda + Seguimiento juntos):
-        with transaccion() as cur:
+    Forma corta (confirma si todo sale bien y revierte si hay un error):
+        with ConexionBD() as cur:
             cur.execute("INSERT ...", ...)
             cur.execute("INSERT ...", ...)
     """
-    con = obtener_conexion()
-    try:
-        cur = con.cursor()
-        yield cur
-        con.commit()
-    except Exception:
-        con.rollback()
-        raise
-    finally:
-        con.close()
+
+    def __init__(self):
+        self.conexion = None
+        self.cursor = None
+
+    def iniciarTransaccion(self):
+        self.conexion = pyodbc.connect(cadenaConexion())
+        self.cursor = self.conexion.cursor()
+        return self.cursor
+
+    def confirmar(self):
+        try:
+            self.conexion.commit()
+        finally:
+            self.conexion.close()
+
+    def revertir(self):
+        try:
+            self.conexion.rollback()
+        finally:
+            self.conexion.close()
+
+    def __enter__(self):
+        return self.iniciarTransaccion()
+
+    def __exit__(self, tipo, error, traza):
+        if error is None:
+            self.confirmar()
+        else:
+            self.revertir()
+        return False            # el error sigue su camino hasta el controlador
 
 
 def consultar(sql, *params):
     """Ejecuta un SELECT y devuelve una lista de diccionarios."""
-    with transaccion() as cur:
+    with ConexionBD() as cur:
         cur.execute(sql, *params)
         columnas = [c[0] for c in cur.description]
         return [dict(zip(columnas, fila)) for fila in cur.fetchall()]

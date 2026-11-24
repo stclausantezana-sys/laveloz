@@ -1,4 +1,4 @@
-"""Cálculo del costo de envío (HU-10).
+"""Cálculo del costo de envío (HU-10): clase Costo y regla calcularCosto.
 
 Reglas de negocio:
   RN-03  Costo = kilos cobrables x precio por kilo + recargo por volumen.
@@ -18,25 +18,25 @@ AEREO = "AEREO"
 
 @dataclass(frozen=True)
 class Costo:
-    kilos_cobrados: int
-    precio_por_kilo: Decimal
+    kilosCobrados: int
+    precioPorKilo: Decimal
     subtotal: Decimal
     recargo: Decimal
     total: Decimal
 
 
-def calcular_costo(peso_kg, volumen_m3, precio_por_kilo, umbral_m3,
-                   recargo_tarifa, forma_envio, recargo_manual=Decimal("0")):
-    if peso_kg <= 0:
+def calcularCosto(pesoKg, volumenM3, precioPorKilo, umbralM3,
+                  recargoTarifa, formaEnvio, recargoManual=Decimal("0")):
+    if pesoKg <= 0:
         raise ValueError("El peso debe ser mayor a 0.")
-    if volumen_m3 < 0:
+    if volumenM3 < 0:
         raise ValueError("El volumen no puede ser negativo.")
 
-    kilos = max(1, math.ceil(peso_kg))                      # RN-04
-    subtotal = kilos * precio_por_kilo
+    kilos = max(1, math.ceil(pesoKg))                       # RN-04
+    subtotal = kilos * precioPorKilo
 
     recargo = Decimal("0")
-    if volumen_m3 > umbral_m3:                              # RN-05
-        recargo = recargo_tarifa if forma_envio == TERRESTRE else recargo_manual
+    if volumenM3 > umbralM3:                                # RN-05
+        recargo = recargoTarifa if formaEnvio == TERRESTRE else recargoManual
 
-    return Costo(kilos, precio_por_kilo, subtotal, recargo, subtotal + recargo)  # RN-03
+    return Costo(kilos, precioPorKilo, subtotal, recargo, subtotal + recargo)   # RN-03
