@@ -2,9 +2,8 @@
 
   EncomiendaDTO   datos que llegan de la pantalla FrmRecepcionEncomienda
   CtrlTarifa      obtiene la tarifa vigente y calcula el costo (HU-10)
-  CtrlRecepcion   coordina el caso de uso y guarda Encomienda + Seguimiento (HU-09)
-
-CtrlVerificacion (productos prohibidos, HU-08) se programa en el Sprint 2.
+  CtrlRecepcion   coordina el caso de uso y guarda Encomienda + Seguimiento (HU-09);
+                  antes de calcular le pregunta a CtrlVerificacion si el contenido es prohibido (HU-08)
 """
 from dataclasses import dataclass
 from datetime import date
@@ -17,6 +16,7 @@ from app.datos.encomienda_repo import EncomiendaRepositorio, SeguimientoReposito
 from app.dominio import costo as reglasCosto
 from app.dominio.codigo_guia import formatearCodigoGuia
 from app.dominio.validaciones import normalizarCi, validarEncomienda
+from app.servicios.verificacion import CtrlVerificacion
 
 
 class ErrorDeNegocio(Exception):
@@ -74,12 +74,13 @@ class CtrlTarifa:
 class CtrlRecepcion:
 
     def __init__(self, clientes=None, encomiendas=None, seguimientos=None, catalogo=None,
-                 ctrlTarifa=None, conexion=ConexionBD):
+                 ctrlTarifa=None, ctrlVerificacion=None, conexion=ConexionBD):
         self.clientes = clientes or ClienteRepositorio()
         self.encomiendas = encomiendas or EncomiendaRepositorio()
         self.seguimientos = seguimientos or SeguimientoRepositorio()
         self.catalogo = catalogo or CatalogoRepositorio()
         self.ctrlTarifa = ctrlTarifa or CtrlTarifa(catalogo=self.catalogo)
+        self.ctrlVerificacion = ctrlVerificacion or CtrlVerificacion()
         self.conexion = conexion
 
     def buscarCliente(self, ci):
@@ -98,6 +99,11 @@ class CtrlRecepcion:
                                     dto.idSucursalDestino, dto.contenido)
         if errores:
             raise ErrorDeNegocio(" ".join(errores.values()))
+
+        prohibido = self.ctrlVerificacion.productoProhibido(dto.contenido)        # HU-08, RN-02
+        if prohibido is not None:
+            raise ErrorDeNegocio(f"Producto prohibido: «{prohibido['nombre']}». "
+                                 "No se puede recibir esta encomienda.")
 
         remitente = self.buscarCliente(dto.ciRemitente)
         destinatario = self.buscarCliente(dto.ciDestinatario)

@@ -11,6 +11,7 @@ import pytest
 
 from app.servicios.clientes import CtrlCliente, ErrorDeValidacion
 from app.servicios.recepcion import CtrlRecepcion, CtrlTarifa, EncomiendaDTO, ErrorDeNegocio
+from app.servicios.verificacion import CtrlVerificacion
 
 EMPLEADO = {"id_empleado": 1, "nombre_completo": "Recepcionista", "rol": "RECEPCIONISTA", "activo": True,
             "id_sucursal": 1, "codigo_sucursal": "SCZ", "sucursal": "Sucursal Santa Cruz", "id_ciudad": 1}
@@ -45,6 +46,11 @@ class CatalogoFalso:
 class TarifaRepositorioFalso:
     def buscarVigente(self, origen, destino, tipo, forma):
         return TARIFA
+
+
+class ProductoProhibidoRepositorioFalso:
+    def listarActivos(self):
+        return [{"nombre": "Materiales inflamables", "palabras_clave": "gasolina,diesel,polvora"}]
 
 
 class EncomiendaRepositorioFalso:
@@ -100,6 +106,7 @@ def ctrl():
     return CtrlRecepcion(clientes=ClienteRepositorioFalso(), encomiendas=EncomiendaRepositorioFalso(),
                          seguimientos=SeguimientoRepositorioFalso(), catalogo=catalogo,
                          ctrlTarifa=CtrlTarifa(TarifaRepositorioFalso(), catalogo),
+                         ctrlVerificacion=CtrlVerificacion(ProductoProhibidoRepositorioFalso()),
                          conexion=conexionFalsa)
 
 
@@ -150,3 +157,20 @@ def test_hu10_ca4_sin_tarifa_vigente(ctrl):
     ctrl.ctrlTarifa.tarifas.buscarVigente = lambda *a: None
     with pytest.raises(ErrorDeNegocio, match="No hay tarifa"):
         ctrl.cotizar(dto(), 1)
+
+
+# ---------------- HU-08 dentro de la recepción ----------------
+
+def test_hu08_ca1_recepcion_bloquea_producto_prohibido(ctrl):
+    with pytest.raises(ErrorDeNegocio, match="Producto prohibido: «Materiales inflamables»"):
+        ctrl.registrarEncomienda(dto(contenido="2 litros de Gasolina"), 1)
+    assert ctrl.encomiendas.guardadas == []
+
+
+def test_hu08_ca2_contenido_permitido_continua(ctrl):
+    assert ctrl.registrarEncomienda(dto(contenido="Ropa de invierno"), 1).startswith("SCZ-")
+
+
+def test_hu08_ca4_contenido_permitido_igual_exige_declaracion(ctrl):
+    with pytest.raises(ErrorDeNegocio, match="declaración"):
+        ctrl.registrarEncomienda(dto(contenido="Ropa", declaraNoProhibido=False), 1)
