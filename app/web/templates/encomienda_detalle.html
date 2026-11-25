@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Encomienda {{ codigo }}</h1>
+<h2>Seguimiento</h2>
+<table>
+  <tr><th>Fecha y hora</th><th>Estado anterior</th><th>Estado nuevo</th><th>Empleado</th><th>Observación</th></tr>
+  {% for s in seguimiento %}
+  <tr><td>{{ s.fecha_hora.strftime('%d/%m/%Y %H:%M:%S') }}</td><td>{{ s.estado_anterior or '—' }}</td>
+      <td>{{ s.estado_nuevo }}</td><td>{{ s.empleado }}</td><td>{{ s.observacion or '' }}</td></tr>
+  {% else %}
+  <tr><td colspan="5">No existe una encomienda con ese código.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

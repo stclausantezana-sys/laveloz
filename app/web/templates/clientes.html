@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Clientes</h1>
+<form method="get" class="caja">
+  <label>Buscar por CI o nombre</label>
+  <input name="q" value="{{ q }}" autofocus> <button type="submit">Buscar</button>
+  <a href="{{ url_for('web.cliente_nuevo', ci=q) }}" style="margin-left:12px">+ Registrar cliente nuevo</a>
+</form>
+<table>
+  <tr><th>CI</th><th>Nombre</th><th>Teléfono</th><th>Correo</th><th></th></tr>
+  {% for c in clientes %}
+  <tr><td>{{ c.ci }}</td><td>{{ c.apellidos }}, {{ c.nombres }}</td><td>{{ c.telefono }}</td><td>{{ c.email or '' }}</td>
+      <td><form class="inline" method="post" action="{{ url_for('web.cliente_eliminar', id_cliente=c.id_cliente) }}"
+                onsubmit="return confirm('¿Eliminar este cliente?')"><button class="secundario">Eliminar</button></form></td></tr>
+  {% else %}
+  <tr><td colspan="5">No se encontraron clientes.{% if q %} <a href="{{ url_for('web.cliente_nuevo', ci=q) }}">Registrar con CI {{ q }}</a>{% endif %}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

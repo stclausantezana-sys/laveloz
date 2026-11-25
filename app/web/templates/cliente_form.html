@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Registrar cliente</h1>
+<form method="post" class="caja">
+  <input type="hidden" name="volver" value="{{ form.get('volver', '') }}">
+  {% for campo, etiqueta in [('ci','CI'), ('nombres','Nombres'), ('apellidos','Apellidos'), ('telefono','Teléfono'), ('email','Correo (opcional)')] %}
+    <label>{{ etiqueta }}</label>
+    <input name="{{ campo }}" value="{{ form.get(campo, '') }}">
+    {% if errores.get(campo) %}<div class="campo-error">{{ errores[campo] }}</div>{% endif %}
+  {% endfor %}
+  <button type="submit">Guardar</button>
+</form>
+{% endblock %}

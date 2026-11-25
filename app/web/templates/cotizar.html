@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Cotizar envío</h1>
+<form method="post" class="caja">
+  <label>Origen</label>
+  <select name="origen">{% for c in ciudades %}<option value="{{ c.id_ciudad }}" {{ 'selected' if form.get('origen') == c.id_ciudad|string }}>{{ c.nombre }}</option>{% endfor %}</select>
+  <label>Destino</label>
+  <select name="destino">{% for c in ciudades %}<option value="{{ c.id_ciudad }}" {{ 'selected' if form.get('destino', '2') == c.id_ciudad|string }}>{{ c.nombre }}</option>{% endfor %}</select>
+  <label>Tipo de encomienda</label>
+  <select name="tipo">{% for t in tipos %}<option value="{{ t.id_tipo }}" {{ 'selected' if form.get('tipo') == t.id_tipo|string }}>{{ t.nombre }}</option>{% endfor %}</select>
+  <label>Forma de envío</label>
+  <select name="forma">
+    <option value="TERRESTRE" {{ 'selected' if form.get('forma') == 'TERRESTRE' }}>Terrestre</option>
+    <option value="AEREO" {{ 'selected' if form.get('forma') == 'AEREO' }}>Aéreo</option>
+  </select>
+  <label>Peso (kg)</label><input name="peso" value="{{ form.get('peso', '') }}" required>
+  <label>Volumen (m³)</label><input name="volumen" value="{{ form.get('volumen', '0') }}">
+  <label>Recargo por volumen (solo aéreo, Bs)</label><input name="recargo" value="{{ form.get('recargo', '0') }}">
+  <button type="submit">Calcular</button>
+</form>
+{% if error %}<div class="caja error">{{ error }}</div>{% endif %}
+{% if costo %}
+<div class="caja ok">
+  <strong>Kilos cobrables:</strong> {{ costo.kilosCobrados }} kg × {{ costo.precioPorKilo }} Bs = {{ costo.subtotal }} Bs<br>
+  <strong>Recargo por volumen:</strong> {{ costo.recargo }} Bs<br>
+  <strong>Total: {{ costo.total }} Bs</strong>
+</div>
+{% endif %}
+{% endblock %}
