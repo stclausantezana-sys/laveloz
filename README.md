@@ -19,6 +19,12 @@ Si dice que falta el controlador ODBC, instalar **ODBC Driver 18 for SQL Server*
 
 Antes del paso 3: en SSMS abrir `db\LaVeloz_crear_bd.sql` y ejecutarlo con **F5**.
 
+### Si la base ya estaba creada con la versión anterior
+
+La primera versión del script solo traía tarifas de Santa Cruz a La Paz. Para agregar las de
+todas las rutas (Santa Cruz, La Paz y Cochabamba en los dos sentidos: 36 tarifas), abrir
+`db\LaVeloz_tarifas_todas_las_rutas.sql` en SSMS y ejecutarlo con **F5**. No borra nada.
+
 ### Comandos a mano (opcional)
 
 ```bat

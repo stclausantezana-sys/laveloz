@@ -9,7 +9,7 @@
       <label>CI del remitente</label><input name="ci_remitente" value="{{ form.get('ci_remitente', '') }}" required>
       <label>CI del destinatario</label><input name="ci_destinatario" value="{{ form.get('ci_destinatario', '') }}" required>
       <label>Sucursal de destino</label>
-      <select name="destino">{% for s in sucursales %}<option value="{{ s.id_sucursal }}" {{ 'selected' if form.get('destino') == s.id_sucursal|string }}>{{ s.nombre }} ({{ s.ciudad }})</option>{% endfor %}</select>
+      <select name="destino">{% for s in sucursales if not empleado or s.id_sucursal != empleado.id_sucursal %}<option value="{{ s.id_sucursal }}" {{ 'selected' if form.get('destino') == s.id_sucursal|string }}>{{ s.nombre }} ({{ s.ciudad }})</option>{% endfor %}</select>
       <label>Tipo de encomienda</label>
       <select name="tipo">{% for t in tipos %}<option value="{{ t.id_tipo }}" {{ 'selected' if form.get('tipo') == t.id_tipo|string }}>{{ t.nombre }}</option>{% endfor %}</select>
       <label>Forma de envío</label>

@@ -209,14 +209,48 @@ INSERT INTO Empleado (ci, nombre_completo, usuario, contrasena_hash, rol, id_suc
     ('1000004', N'Despachante de prueba LPZ',   'despacho.lpz',  'PENDIENTE_HASH', 'DESPACHANTE',   2),
     ('1000005', N'Administrador',               'admin',         'PENDIENTE_HASH', 'ADMINISTRADOR', 1);
 
--- Santa Cruz (1) -> La Paz (2). Tipos: 1 Sobres-Documentos, 2 Alimentos, 3 Otros
+-- Tarifas de todas las rutas entre las 3 ciudades, en los dos sentidos (3 tipos x 2 formas = 36).
+-- Ciudades: 1 Santa Cruz, 2 La Paz, 3 Cochabamba. Tipos: 1 Sobres-Documentos, 2 Alimentos, 3 Otros.
+-- Los precios terrestres Santa Cruz -> La Paz son los de la ficha del caso; los demás son datos de
+-- prueba (más baratos cuanto más corta la ruta) y el administrador los ajusta (HU-05).
+-- En aéreo el recargo por volumen lo asigna el recepcionista (RN-05), por eso queda en 0.
 INSERT INTO Tarifa (id_ciudad_origen, id_ciudad_destino, id_tipo, forma_envio, precio_por_kilo, umbral_volumen_m3, recargo_volumen) VALUES
-    (1, 2, 1, 'TERRESTRE', 50.00, 0.050, 10.00),   -- ficha del caso
-    (1, 2, 2, 'TERRESTRE',  2.00, 0.050, 10.00),   -- ficha del caso
-    (1, 2, 3, 'TERRESTRE',  3.00, 0.050, 10.00),   -- ficha del caso
-    (1, 2, 1, 'AEREO',     70.00, 0.050,  0.00),   -- prueba; en aéreo el recargo lo asigna el recepcionista (RN-05)
-    (1, 2, 2, 'AEREO',      5.00, 0.050,  0.00),   -- prueba
-    (1, 2, 3, 'AEREO',      6.00, 0.050,  0.00);   -- prueba
+    (1, 2, 1, 'TERRESTRE',  50.00, 0.050,  10.00),   -- ficha del caso
+    (1, 2, 2, 'TERRESTRE',   2.00, 0.050,  10.00),   -- ficha del caso
+    (1, 2, 3, 'TERRESTRE',   3.00, 0.050,  10.00),   -- ficha del caso
+    (1, 2, 1, 'AEREO',      70.00, 0.050,   0.00),   -- prueba
+    (1, 2, 2, 'AEREO',       5.00, 0.050,   0.00),   -- prueba
+    (1, 2, 3, 'AEREO',       6.00, 0.050,   0.00),   -- prueba
+    (2, 1, 1, 'TERRESTRE',  50.00, 0.050,  10.00),   -- prueba
+    (2, 1, 2, 'TERRESTRE',   2.00, 0.050,  10.00),   -- prueba
+    (2, 1, 3, 'TERRESTRE',   3.00, 0.050,  10.00),   -- prueba
+    (2, 1, 1, 'AEREO',      70.00, 0.050,   0.00),   -- prueba
+    (2, 1, 2, 'AEREO',       5.00, 0.050,   0.00),   -- prueba
+    (2, 1, 3, 'AEREO',       6.00, 0.050,   0.00),   -- prueba
+    (1, 3, 1, 'TERRESTRE',  40.00, 0.050,   8.00),   -- prueba
+    (1, 3, 2, 'TERRESTRE',   1.50, 0.050,   8.00),   -- prueba
+    (1, 3, 3, 'TERRESTRE',   2.50, 0.050,   8.00),   -- prueba
+    (1, 3, 1, 'AEREO',      60.00, 0.050,   0.00),   -- prueba
+    (1, 3, 2, 'AEREO',       4.00, 0.050,   0.00),   -- prueba
+    (1, 3, 3, 'AEREO',       5.00, 0.050,   0.00),   -- prueba
+    (3, 1, 1, 'TERRESTRE',  40.00, 0.050,   8.00),   -- prueba
+    (3, 1, 2, 'TERRESTRE',   1.50, 0.050,   8.00),   -- prueba
+    (3, 1, 3, 'TERRESTRE',   2.50, 0.050,   8.00),   -- prueba
+    (3, 1, 1, 'AEREO',      60.00, 0.050,   0.00),   -- prueba
+    (3, 1, 2, 'AEREO',       4.00, 0.050,   0.00),   -- prueba
+    (3, 1, 3, 'AEREO',       5.00, 0.050,   0.00),   -- prueba
+    (3, 2, 1, 'TERRESTRE',  35.00, 0.050,   8.00),   -- prueba
+    (3, 2, 2, 'TERRESTRE',   1.20, 0.050,   8.00),   -- prueba
+    (3, 2, 3, 'TERRESTRE',   2.00, 0.050,   8.00),   -- prueba
+    (3, 2, 1, 'AEREO',      55.00, 0.050,   0.00),   -- prueba
+    (3, 2, 2, 'AEREO',       3.50, 0.050,   0.00),   -- prueba
+    (3, 2, 3, 'AEREO',       4.50, 0.050,   0.00),   -- prueba
+    (2, 3, 1, 'TERRESTRE',  35.00, 0.050,   8.00),   -- prueba
+    (2, 3, 2, 'TERRESTRE',   1.20, 0.050,   8.00),   -- prueba
+    (2, 3, 3, 'TERRESTRE',   2.00, 0.050,   8.00),   -- prueba
+    (2, 3, 1, 'AEREO',      55.00, 0.050,   0.00),   -- prueba
+    (2, 3, 2, 'AEREO',       3.50, 0.050,   0.00),   -- prueba
+    (2, 3, 3, 'AEREO',       4.50, 0.050,   0.00);   -- prueba
 
 -- Catálogo de ejemplo: validar contra la normativa boliviana vigente antes de usar en producción
 INSERT INTO ProductoProhibido (nombre, palabras_clave, base_legal) VALUES

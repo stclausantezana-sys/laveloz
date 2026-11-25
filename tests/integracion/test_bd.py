@@ -9,9 +9,16 @@ pytestmark = pytest.mark.skipif(not (os.getenv("DB_CONN") or os.getenv("DB_SERVE
                                 reason="sin conexión configurada en .env")
 
 
-def test_hay_tarifas_cargadas():
-    from app.datos.catalogo_repo import TarifaRepositorio
-    assert len(TarifaRepositorio().listarVigentes()) >= 3
+def test_hay_tarifa_para_todas_las_rutas():
+    """Las 3 ciudades entre sí, en los dos sentidos, 3 tipos y 2 formas: 36 tarifas."""
+    from app.datos.catalogo_repo import CatalogoRepositorio, TarifaRepositorio
+    catalogo, tarifas = CatalogoRepositorio(), TarifaRepositorio()
+    ciudades = [c["id_ciudad"] for c in catalogo.listarCiudades()]
+    tipos = [t["id_tipo"] for t in catalogo.listarTipos()]
+    faltan = [(o, d, t, f) for o in ciudades for d in ciudades if o != d
+              for t in tipos for f in ("TERRESTRE", "AEREO")
+              if tarifas.buscarVigente(o, d, t, f) is None]
+    assert faltan == [], f"Rutas sin tarifa (origen, destino, tipo, forma): {faltan}"
 
 
 def test_tarifa_terrestre_otros_scz_lpz_es_3_bs():
