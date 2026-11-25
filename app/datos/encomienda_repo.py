@@ -39,6 +39,30 @@ class EncomiendaRepositorio:
              e["precio_por_kilo"], e["recargo"], e["total"], 1)
         return cur.fetchone()[0]
 
+    def buscarPorCodigo(self, codigo):
+        """La encomienda con su monto y estado, para la caja (HU-13)."""
+        filas = consultar("""
+            SELECT e.id_encomienda, e.codigo_guia, e.estado, e.monto_total,
+                   r.nombres + ' ' + r.apellidos AS remitente,
+                   d.nombres + ' ' + d.apellidos AS destinatario,
+                   sd.nombre AS destino
+            FROM Encomienda e
+            JOIN Cliente r ON r.id_cliente = e.id_remitente
+            JOIN Cliente d ON d.id_cliente = e.id_destinatario
+            JOIN Sucursal sd ON sd.id_sucursal = e.id_sucursal_destino
+            WHERE e.codigo_guia = ?
+        """, codigo)
+        return filas[0] if filas else None
+
+    def cambiarEstado(self, cur, idEncomienda, estadoAnterior, estadoNuevo):
+        """Cambia el estado solo si todavía está en estadoAnterior y devuelve True si cambió.
+
+        Si dos cajas cobran a la vez, la segunda ya no encuentra la fila en REGISTRADA.
+        """
+        cur.execute("UPDATE Encomienda SET estado = ? WHERE id_encomienda = ? AND estado = ?",
+                    estadoNuevo, idEncomienda, estadoAnterior)
+        return cur.rowcount == 1
+
     def existeCodigo(self, codigo):
         return bool(consultar("SELECT 1 AS si FROM Encomienda WHERE codigo_guia = ?", codigo))
 
