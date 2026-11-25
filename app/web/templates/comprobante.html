@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="caja" style="max-width:480px">
+  <h1 style="margin-top:0">Currier La Veloz SRL</h1>
+  <p><strong>Comprobante de pago N.º {{ p.nro_comprobante }}</strong><br>
+     {{ p.sucursal }} · {{ p.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+  <table>
+    <tr><th>Código de guía</th><td>{{ p.codigo_guia }}</td></tr>
+    <tr><th>Remitente</th><td>{{ p.remitente }}</td></tr>
+    <tr><th>Destinatario</th><td>{{ p.destinatario }}</td></tr>
+    <tr><th>Destino</th><td>{{ p.destino }}</td></tr>
+    <tr><th>Método de pago</th><td>{{ p.metodo }}</td></tr>
+    <tr><th>Monto pagado</th><td><strong>{{ p.monto }} Bs</strong></td></tr>
+    <tr><th>Cajera</th><td>{{ p.cajera }}</td></tr>
+  </table>
+  <p>Rastree su envío en <a href="{{ url_for('web.rastrear', codigo=p.codigo_guia) }}">/rastrear</a> con el código de guía.</p>
+  <button onclick="window.print()">Imprimir</button>
+</div>
+{% endblock %}

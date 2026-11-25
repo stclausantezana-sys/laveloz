@@ -21,8 +21,8 @@ def test_tarifa_terrestre_otros_scz_lpz_es_3_bs():
     assert t["precio_por_kilo"] == Decimal("3.00")
 
 
-def test_hu07_y_hu09_flujo_completo_en_sql_server():
-    """Registra dos clientes y una encomienda reales (deja datos de prueba en la BD)."""
+def test_flujo_completo_en_sql_server():
+    """HU-07, HU-09, HU-13 y HU-19 sobre una encomienda real (deja datos de prueba en la BD)."""
     import random
     from decimal import Decimal
     from app.datos.encomienda_repo import EncomiendaRepositorio, SeguimientoRepositorio
@@ -38,3 +38,22 @@ def test_hu07_y_hu09_flujo_completo_en_sql_server():
         declaraNoProhibido=True), 1)
     assert EncomiendaRepositorio().existeCodigo(codigo)
     assert SeguimientoRepositorio().listarPorCodigo(codigo)[0]["estado_nuevo"] == "REGISTRADA"
+
+    # Sprint 2: HU-13 cobro y HU-19 rastreo sobre la misma encomienda
+    from app.servicios.caja import CtrlCaja
+    from app.servicios.rastreo import CtrlRastreo
+    from app.servicios.recepcion import ErrorDeNegocio
+    nro = CtrlCaja().cobrarEncomienda(codigo, "EFECTIVO", 2)
+    assert nro.startswith("CSCZ-")
+    with pytest.raises(ErrorDeNegocio):
+        CtrlCaja().cobrarEncomienda(codigo, "EFECTIVO", 2)                 # no se cobra dos veces
+    estados = [s["estado_nuevo"] for s in SeguimientoRepositorio().listarPorCodigo(codigo)]
+    assert estados == ["REGISTRADA", "PAGADA"]
+    r = CtrlRastreo().rastrear(codigo)
+    assert r["estado"] == "PAGADA" and r["etapas"][1]["fecha_hora"] is not None
+
+
+def test_hu08_productos_prohibidos_cargados_en_la_bd():
+    from app.servicios.verificacion import CtrlVerificacion
+    assert CtrlVerificacion().esProhibido("un bidón de GASOLINA")
+    assert not CtrlVerificacion().esProhibido("ropa y libros")

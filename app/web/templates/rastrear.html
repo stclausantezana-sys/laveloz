@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block contenido %}
+{% set nombres = {'REGISTRADA': 'Registrada, pendiente de pago', 'PAGADA': 'Pagada, lista para salir',
+                  'EN_TRANSITO': 'En camino', 'EN_DESTINO': 'Lista para recoger en destino',
+                  'ENTREGADA': 'Entregada', 'ANULADA': 'Anulada'} %}
+<h1>Rastrear encomienda</h1>
+<form method="get" class="caja">
+  <label>Código de guía</label>
+  <input name="codigo" value="{{ codigo }}" placeholder="SCZ-20261125-00001" required>
+  <button type="submit">Rastrear</button>
+</form>
+{% if codigo and not resultado %}
+  <div class="caja error">Código de guía no encontrado.</div>
+{% elif resultado %}
+<div class="caja">
+  <strong>{{ resultado.codigo_guia }}</strong> · {{ resultado.tipo }} · {{ resultado.origen }} → {{ resultado.destino }}
+  <p style="font-size:1.2em">Estado: <strong>{{ nombres.get(resultado.estado, resultado.estado) }}</strong></p>
+  <table>
+    <tr><th>Etapa</th><th>Fecha y hora</th></tr>
+    {% for e in resultado.etapas %}
+    <tr><td>{{ e.etapa }}</td>
+        <td>{{ e.fecha_hora.strftime('%d/%m/%Y %H:%M') if e.fecha_hora else 'Pendiente' }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

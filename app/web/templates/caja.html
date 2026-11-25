@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block contenido %}
+<h1>Caja – Cobrar encomienda</h1>
+<p>Cajera: <strong>{{ cajera.nombre_completo if cajera else '¿?' }}</strong></p>
+<form method="get" class="caja">
+  <label>Código de guía</label>
+  <input name="codigo" value="{{ codigo }}" placeholder="SCZ-20261125-00001" required>
+  <button type="submit">Buscar</button>
+</form>
+{% if error %}<div class="caja error">{{ error }}</div>{% endif %}
+{% if encomienda %}
+<div class="caja">
+  <strong>{{ encomienda.codigo_guia }}</strong> · Estado: <strong>{{ encomienda.estado }}</strong><br>
+  Remitente: {{ encomienda.remitente }} · Destinatario: {{ encomienda.destinatario }} · Destino: {{ encomienda.destino }}
+  <p style="font-size:1.3em">Monto a cobrar: <strong>{{ encomienda.monto_total }} Bs</strong></p>
+  {% if encomienda.estado == 'REGISTRADA' %}
+  <form method="post">
+    <input type="hidden" name="codigo" value="{{ encomienda.codigo_guia }}">
+    <label>Método de pago</label>
+    <select name="metodo">
+      <option value="EFECTIVO">Efectivo</option>
+      <option value="TARJETA">Tarjeta</option>
+      <option value="QR">QR</option>
+    </select>
+    <button type="submit">Confirmar cobro</button>
+  </form>
+  {% else %}
+  <p class="campo-error">Esta encomienda no se puede cobrar porque está {{ encomienda.estado }}.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

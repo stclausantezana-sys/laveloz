@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block contenido %}
 <h1>Encomienda {{ codigo }}</h1>
+<p><a href="{{ url_for('web.caja', codigo=codigo) }}">Cobrar en caja</a> ·
+   <a href="{{ url_for('web.rastrear', codigo=codigo) }}">Ver rastreo público</a></p>
 <h2>Seguimiento</h2>
 <table>
   <tr><th>Fecha y hora</th><th>Estado anterior</th><th>Estado nuevo</th><th>Empleado</th><th>Observación</th></tr>

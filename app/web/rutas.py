@@ -2,6 +2,8 @@
 
   FrmCliente               -> clientes.html y cliente_form.html (rutas /clientes...)
   FrmRecepcionEncomienda   -> encomienda_form.html (ruta /encomiendas/nueva)
+  FrmCaja                  -> caja.html y comprobante.html (rutas /caja...)      Sprint 2
+  FrmRastreo               -> rastrear.html (ruta /rastrear, pública)            Sprint 2
 
 Solo leen el formulario, arman el DTO, llaman a los controladores y muestran el
 resultado: no tienen reglas de negocio ni SQL.
@@ -14,7 +16,9 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from app.datos.catalogo_repo import CatalogoRepositorio, TarifaRepositorio
 from app.datos.conexion import consultar
 from app.datos.encomienda_repo import EncomiendaRepositorio, SeguimientoRepositorio
+from app.servicios.caja import CtrlCaja
 from app.servicios.clientes import CtrlCliente, ErrorDeValidacion
+from app.servicios.rastreo import CtrlRastreo
 from app.servicios.recepcion import CtrlRecepcion, CtrlTarifa, EncomiendaDTO, ErrorDeNegocio
 
 bp = Blueprint("web", __name__)
@@ -29,6 +33,11 @@ def recepcionistaActual():
     # Release 1: no hay inicio de sesión (HU-01 está en el Sprint 4).
     # Se usa el recepcionista de prueba configurado en .env.
     return int(os.getenv("RECEPCIONISTA_ID", "1"))
+
+
+def cajeraActual():
+    # Igual que el recepcionista: la cajera de prueba del script SQL (id 2) hasta tener login.
+    return int(os.getenv("CAJERA_ID", "2"))
 
 
 # ---------------- Inicio y catálogos ----------------
@@ -154,3 +163,45 @@ def encomienda_nueva():
 def encomienda_detalle(codigo):
     return render_template("encomienda_detalle.html", codigo=codigo,
                            seguimiento=SeguimientoRepositorio().listarPorCodigo(codigo))
+
+
+# ---------------- HU-13 Caja (FrmCaja) ----------------
+
+@bp.route("/caja", methods=["GET", "POST"])
+def caja():
+    codigo = (request.values.get("codigo") or "").strip().upper()
+    encomienda, error = None, None
+    ctrl = CtrlCaja()
+    if request.method == "POST":
+        try:
+            nro = ctrl.cobrarEncomienda(codigo, request.form.get("metodo", ""), cajeraActual())
+            flash(f"Cobro registrado con el comprobante {nro}.", "ok")
+            return redirect(url_for("web.comprobante", nro=nro))
+        except ErrorDeNegocio as e:
+            error = str(e)
+    if codigo:
+        try:
+            encomienda = ctrl.buscarEncomienda(codigo)
+        except ErrorDeNegocio as e:
+            error = error or str(e)
+    return render_template("caja.html", codigo=codigo, encomienda=encomienda, error=error,
+                           cajera=CatalogoRepositorio().obtenerEmpleado(cajeraActual()))
+
+
+@bp.route("/caja/comprobante/<nro>")
+def comprobante(nro):
+    try:
+        pago = CtrlCaja().comprobante(nro)
+    except ErrorDeNegocio as e:
+        flash(str(e), "error")
+        return redirect(url_for("web.caja"))
+    return render_template("comprobante.html", p=pago)
+
+
+# ---------------- HU-19 Rastreo público (FrmRastreo) ----------------
+
+@bp.route("/rastrear")
+def rastrear():
+    codigo = (request.args.get("codigo") or "").strip().upper()
+    resultado = CtrlRastreo().rastrear(codigo) if codigo else None
+    return render_template("rastrear.html", codigo=codigo, resultado=resultado)

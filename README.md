@@ -51,8 +51,17 @@ db/              script de la base de datos
 | HU-07 Registrar cliente | Buscar, registrar (sin duplicar CI) y eliminar si no tiene encomiendas | `CtrlCliente.registrarCliente()`, `eliminarCliente()`; `ClienteRepositorio.buscarPorCi()`, `guardar()` → `/clientes` | `test_validaciones.py`, `test_servicios.py` |
 | HU-09 Registrar recepción | Calcula, confirma con declaración y guarda Encomienda + Seguimiento en una transacción con código de guía | `EncomiendaDTO`; `CtrlRecepcion.buscarCliente()`, `cotizar()`, `registrarEncomienda()`, `generarCodigoGuia()`; `EncomiendaRepositorio.guardar()`; `SeguimientoRepositorio.registrar()`; `ConexionBD` → `/encomiendas/nueva` | `test_servicios.py`, `test_codigo_guia.py` |
 
+## Estado del Sprint 2
+
+| Historia | Qué hace | Clases y métodos | Pruebas |
+|---|---|---|---|
+| HU-08 Verificar productos prohibidos | Bloquea la recepción si el contenido tiene una palabra prohibida (sin importar mayúsculas ni tildes) | `CtrlVerificacion.esProhibido()`, `buscarProhibido()` (dominio/verificacion.py), `ProductoProhibidoRepositorio` | `test_verificacion.py` (TDD), `test_servicios.py` |
+| HU-13 Cobrar y emitir comprobante | La cajera busca por código de guía, cobra (efectivo, tarjeta o QR), la encomienda pasa a PAGADA y sale el comprobante | `CtrlCaja.buscarEncomienda()`, `cobrarEncomienda()`, `PagoRepositorio`, `formatearNroComprobante()` → `/caja` | `test_caja.py` |
+| HU-19 Rastrear encomienda | El cliente consulta su código de guía y ve el estado y la fecha de cada etapa, sin CI ni teléfono | `CtrlRastreo.rastrear()`, `RastreoRepositorio` → `/rastrear` | `test_rastreo.py` |
+
 Para probar el flujo completo: registrar dos clientes en **Clientes**, luego **Nueva encomienda**
-(Calcular costo → marcar la declaración → Confirmar) y ver su seguimiento.
+(Calcular costo → marcar la declaración → Confirmar), cobrarla en **Caja** y consultarla en **Rastrear**.
+Si en el contenido se escribe «gasolina», el sistema bloquea el registro (HU-08).
 
 ## Del diseño al código (los nombres coinciden)
 
@@ -62,12 +71,16 @@ Para probar el flujo completo: registrar dos clientes en **Clientes**, luego **N
 | FrmCliente «boundary» | `templates/clientes.html`, `cliente_form.html` + rutas `/clientes` |
 | CtrlRecepcion «control» | `servicios/recepcion.py` → `class CtrlRecepcion` |
 | CtrlTarifa «control» | `servicios/recepcion.py` → `class CtrlTarifa` |
-| CtrlVerificacion «control» | Sprint 2 (HU-08) |
+| CtrlVerificacion «control» | `servicios/verificacion.py` → `class CtrlVerificacion` (`esProhibido`) |
+| CtrlCaja «control» (Sprint 2) | `servicios/caja.py` → `class CtrlCaja` |
+| CtrlRastreo «control» (Sprint 2) | `servicios/rastreo.py` → `class CtrlRastreo` |
 | Costo | `dominio/costo.py` → `class Costo` |
 | EncomiendaDTO | `servicios/recepcion.py` → `class EncomiendaDTO` |
 | IClienteRepositorio | `datos/cliente_repo.py` → `class ClienteRepositorio` |
 | IEncomiendaRepositorio / ISeguimientoRepositorio | `datos/encomienda_repo.py` → `EncomiendaRepositorio`, `SeguimientoRepositorio` |
 | ITarifaRepositorio | `datos/catalogo_repo.py` → `class TarifaRepositorio` |
+| IProductoProhibidoRepositorio | `datos/producto_repo.py` → `class ProductoProhibidoRepositorio` |
+| IPagoRepositorio | `datos/pago_repo.py` → `class PagoRepositorio` |
 | ConexionBD | `datos/conexion.py` → `class ConexionBD` (`iniciarTransaccion`, `confirmar`, `revertir`) |
 
 En Python no hay interfaces: cada clase `XRepositorio` cumple el papel de la interfaz `IXRepositorio` del diseño.
@@ -80,5 +93,5 @@ En Python no hay interfaces: cada clase `XRepositorio` cumple el papel de la int
 - Los controladores reciben sus repositorios en el constructor: en las pruebas se les pasan repositorios falsos.
 - Commits: `HU-XX: qué se hizo` y, si se programó en pareja, la línea
   `Co-authored-by: Nombre <correo>` al final del mensaje.
-- Ramas: una rama por sprint (`sprint-1`), se integra a `main` con una pull request revisada por el compañero.
+- Ramas: una rama por sprint (`sprint-1`, `sprint-2`), se integra a `main` con una pull request revisada por el compañero.
 - Antes de integrar a `main`: `pytest` en verde.
